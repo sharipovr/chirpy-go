@@ -28,9 +28,14 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) writehitsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	_, err := w.Write([]byte(fmt.Sprintf("Hits: %v", cfg.fileserverHits.Load())))
+	_, err := w.Write([]byte(fmt.Sprintf(`<html>
+  <body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited %d times!</p>
+  </body>
+	</html>`, cfg.fileserverHits.Load())))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -47,8 +52,8 @@ func main() {
 	var apiCfg apiConfig
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(appHandler))
 	mux.HandleFunc("GET /api/healthz", readinessHandler)
-	mux.HandleFunc("GET /api/metrics", apiCfg.writehitsHandler)
-	mux.HandleFunc("POST /api/reset", apiCfg.resethitsHnadler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.writehitsHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resethitsHnadler)
 
 	server := &http.Server{
 		Addr:    ":8080",

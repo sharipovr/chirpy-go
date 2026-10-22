@@ -12,19 +12,24 @@ type chirp struct {
 type validResponse struct {
 	Valid bool `json:"valid"`
 }
+type cleanedChirp struct {
+	CleanedBody string `json:"cleaned_body"`
+}
 
 func handlerChirpValidate(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	chirpBody := chirp{}
-	err := decoder.Decode(&chirpBody)
+	chirpData := chirp{}
+	err := decoder.Decode(&chirpData)
 
 	if err != nil {
 		respondWithError(w, 400, "Something went wrong")
 		return
 	}
-	if len(chirpBody.Body) > 140 {
+	if len(chirpData.Body) > 140 {
 		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
-	respondWithJSON(w, 200, validResponse{Valid: true})
+	cleanedText := helperBadWordsClean(chirpData.Body)
+
+	respondWithJSON(w, 200, cleanedChirp{CleanedBody: cleanedText})
 }

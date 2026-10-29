@@ -18,6 +18,12 @@ type apiConfig struct {
 	platform       string
 }
 
+// Struct to decode incoming JSON
+type ChirpInput struct {
+	Body   string `json:"body"`
+	UserID string `json:"user_id"`
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -39,7 +45,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerHitsWrite)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
-	mux.HandleFunc("POST /api/validate_chirp", handlerChirpValidate)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpCreate)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
 
 	server := &http.Server{

@@ -11,8 +11,9 @@ import (
 )
 
 type payload struct {
-	Password string `json:"password"`
-	Email    string `json:"email"`
+	Password         string `json:"password"`
+	Email            string `json:"email"`
+	ExpiresInSeconds int    `json:"expires_in_seconds"`
 }
 
 type User struct {
@@ -20,6 +21,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
@@ -81,11 +83,24 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	expires := userPayload.ExpiresInSeconds
+
+	if expires == 0 || expires > 3600 {
+		expires = 3600
+	}
+
+	token, err := auth.MakeJWT(dbuser.ID, cfg.jwtSecret, time.Duration(expires)*time.Second)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
 	user := User{
 		ID:        dbuser.ID,
 		CreatedAt: dbuser.CreatedAt,
 		UpdatedAt: dbuser.UpdatedAt,
 		Email:     dbuser.Email,
+		Token:     token,
 	}
 
 	respondWithJSON(w, http.StatusOK, user)

@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 // Struct to decode incoming JSON
@@ -38,6 +39,7 @@ func main() {
 	var apiCfg apiConfig
 	apiCfg.db = database.New(db)
 	apiCfg.platform = os.Getenv("PLATFORM")
+	apiCfg.jwtSecret = os.Getenv("JWT_SECRET")
 
 	mux := http.NewServeMux()
 	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))

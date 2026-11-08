@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sharipovr/chirpy-go/internal/auth"
 	"github.com/sharipovr/chirpy-go/internal/database"
 )
 
 type chirp struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type Chirp struct {
@@ -23,9 +23,21 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) handlerChirpCreate(w http.ResponseWriter, r *http.Request) {
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Unauthorized")
+		return
+	}
+	authUUID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "Unauthorized")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	chirpData := chirp{}
-	err := decoder.Decode(&chirpData)
+	err = decoder.Decode(&chirpData)
 
 	if err != nil {
 		respondWithError(w, 400, "Something went wrong")
@@ -44,7 +56,7 @@ func (cfg *apiConfig) handlerChirpCreate(w http.ResponseWriter, r *http.Request)
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			Body:      cleanedText,
-			UserID:    chirpData.UserID,
+			UserID:    authUUID,
 		})
 
 	if err != nil {

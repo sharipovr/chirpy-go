@@ -1,9 +1,13 @@
 package auth
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+
+	"net/http"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt/v5"
@@ -62,4 +66,23 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return emptyUUID, err
 	}
 	return userUUID, nil
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+
+	header := headers.Get("Authorization")
+	if header == "" {
+		return "", fmt.Errorf("no Authorization header in the request")
+	}
+
+	token, ok := strings.CutPrefix(header, "Bearer ")
+	if !ok {
+		return "", fmt.Errorf("no Bearer prefix in Authorization header found")
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", fmt.Errorf("token seems to be empty in Authorization header")
+	}
+	return token, nil
 }
